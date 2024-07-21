@@ -1,0 +1,134 @@
+schema:
+    definitions:
+        Post:
+            title: Represents a blog post.
+            type: object
+            required:
+                - userId
+                - _id
+                - title
+                - body
+            properties:
+                userId:
+                    type: number
+                _id:
+                    type: string
+                title:
+                    type: string
+                body:
+                    type: string
+            additionalProperties: false
+        PostAddedMessage:
+            title: Message sent when a post is added.
+            type: object
+            required:
+                - postId
+                - userId
+            properties:
+                postId:
+                    type: string
+                userId:
+                    type: number
+        UserPaymentProcessedMessage:
+            title: Message sent when payments are processed.
+            type: object
+            required:
+                - userId
+            properties:
+                userId:
+                    type: number
+        GetPostsResponse:
+            title: GET /post response
+            type: array
+            items:
+                $ref: "#/schema/definitions/Post"
+        GetPostResponse:
+            title: GET /post/id response
+            $ref: "#/schema/definitions/Post"
+        CreatePostResponse:
+            title: POST /posts response
+            type: object
+            required:
+                - _id
+            properties:
+                _id:
+                    type: string
+            additionalProperties: false
+specs:
+    - title: Gets all blog posts
+      description: Gets all blog posts from the REST API.
+      fixture: many-posts
+      type: http
+      method: get
+      url: /posts
+      expected:
+          immediateResponse:
+              status: 200
+              headers:
+                  Content-Type: application/json; charset=utf-8
+              body:
+                  $ref: "#/schema/definitions/GetPostsResponse"
+    - title: Gets one blog post
+      description: Gets one blog post from the REST API.
+      fixture: many-posts
+      type: http
+      method: get
+      url: /posts/668e260c89e981bf23632c2a
+      expected:
+          immediateResponse:
+              status: 200
+              headers:
+                  Content-Type: application/json; charset=utf-8
+              body:
+                  $ref: "#/schema/definitions/GetPostResponse"
+    - title: Adds a new blog post
+      description: Adds a new blog post to the REST API.
+      fixture: many-posts
+      type: http
+      method: post
+      url: /posts
+      headers:
+          Content-Type: application/json; charset=utf-8
+      body:
+          title: A new blog post
+          body: A great blog this is.
+          userId: 1
+      expected:
+          immediateResponse:
+              status: 201
+              headers:
+                  Content-Type: application/json; charset=utf-8
+              body:
+                  $ref: "#/schema/definitions/CreatePostResponse"
+          asyncResponse:
+              type: rabbit
+              exchange: post-added
+              body:
+                  $ref: "#/schema/definitions/PostAddedMessage"
+    - title: Processes a payment on new user
+      description: Processes a payment on adding a new user.
+      fixture: many-posts
+      type: rabbit
+      exchange: new-user
+      body:
+          userId: 1
+          name: John Doe
+      expected:
+          asyncResponse:
+              type: rabbit
+              exchange: payment-processed
+              body:
+                  $ref: "#/schema/definitions/UserPaymentProcessedMessage"
+    - title: Fails to add a new post
+      description: Trys to add a new post, but fails due to bad body.
+      fixture: many-posts
+      type: http
+      method: post
+      url: /posts
+      headers:
+          Content-Type: application/json; charset=utf-8
+      body:
+          pass: 1 # Body is not valid.
+      expected:
+          immediateResponse:
+              status: 400

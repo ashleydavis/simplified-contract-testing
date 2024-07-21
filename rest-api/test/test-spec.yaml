@@ -1,0 +1,72 @@
+schema:
+    definitions:
+        Post:
+            title: Represents a blog post.
+            type: object
+            required:
+                - userId
+                - id
+                - title
+                - body
+            properties:
+                userId:
+                    type: number
+                id:
+                    type: number
+                title:
+                    type: string
+                body:
+                    type: string
+        GetPostsResponse:
+            title: GET /post response
+            type: array
+            items:
+                $ref: "#/schema/definitions/Post"
+        GetPostResponse:
+            title: GET /post/1 response
+            $ref: "#/schema/definitions/Post"
+        PostPostsResponse:
+            title: POST /posts response
+            type: object
+            required:
+                - id
+            properties:
+                id:
+                    type: number
+specs:
+    - title: Gets all blog posts
+      description: Gets all blog posts from the REST API.
+      method: get
+      url: /posts
+      expected:
+          status: 200
+          headers:
+              Content-Type: application/json; charset=utf-8
+          body:
+              $ref: "#/schema/definitions/GetPostsResponse"
+    - title: Gets one blog post
+      description: Gets one blog post from the REST API.
+      method: get
+      url: /posts/1
+      expected:
+          status: 200
+          headers:
+              Content-Type: application/json; charset=utf-8
+          body:
+              $ref: "#/schema/definitions/GetPostResponse"
+    - title: Adds a new blog post
+      description: Adds a new blog post to the REST API.
+      method: post
+      url: /posts
+      headers:
+          Content-Type: application/json; charset=utf-8
+      body:
+          title: A new blog post
+          body: A great blog this is.
+          userId: 1
+      expected:
+          status: 201
+          headers:
+              Content-Type: application/json; charset=utf-8
+          body:
+              $ref: "#/schema/definitions/PostPostsResponse"
