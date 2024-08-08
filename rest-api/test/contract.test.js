@@ -26,6 +26,13 @@ describe("Contract tests", () => {
         });
 
         //
+        // Match status
+        //
+        if (spec.expected.status) {
+            expect(response.status).toEqual(spec.expected.status);
+        }
+                
+        //
         // Match headers.
         //
         if (spec.expected.headers) {
